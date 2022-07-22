@@ -1,21 +1,27 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(Zeroscript)
 
+include(FetchContent)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_STANDARD 11)
 
-set(ANTLR_TOOL_PATH /usr/local/lib/antlr-4.7.1-complete.jar)
+set(ANTLR_URL https://www.antlr.org/download/antlr4-cpp-runtime-4.7.2-source.zip)
+FetchContent_Declare(antlr URL ${ANTLR_URL} URL_HASH MD5=3a88c898579f78d8c84c583c5160986b)
+FetchContent_MakeAvailable(antlr)
+set(ANTLR_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/antlr-src)
+list(APPEND CMAKE_MODULE_PATH ${ANTLR_DIR}/cmake)
+
+include_directories(${ANTLR_DIR}/runtime/src)
 
 add_custom_target(Antlr
-        COMMAND java -jar ${ANTLR_TOOL_PATH} zeroscript.g4 -Dlanguage=Cpp -o src/compiler/parser/generated
+        COMMAND antlr4 zeroscript.g4 -Dlanguage=Cpp -o src/compiler/parser/generated
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         SOURCES zeroscript.g4)
 
 add_executable(zero src/main.cpp)
-target_link_libraries(zero antlr4-runtime)
 add_executable(tester src/tester/tester.cpp)
 
-target_link_libraries(zero pthread)
+target_link_libraries(zero pthread antlr4_static)
 
 add_dependencies(zero Antlr)
 
